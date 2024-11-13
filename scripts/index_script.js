@@ -158,23 +158,6 @@ function Life(particleGroup1, particleGroup2, g) {
       let deltaX = GetLinearDistance(a.x, b.x,true);
       let deltaY = GetLinearDistance(a.y, b.y,false);
 
-      //OLD SYSTEM
-      /*if (b.x <= areaOfEffect && a.x >= areaOfEffect) {
-        deltaX = a.x - (canvas.width + b.x);
-      } else if ((b.x >= areaOfEffect && a.x >= areaOfEffect) || (b.x <= areaOfEffect && a.x <= areaOfEffect)) {
-        deltaX = a.x - b.x;
-      } else if (a.x <= areaOfEffect && b.x >= areaOfEffect) {
-        deltaX = a.x - (b.x - canvas.width);
-      }
-
-      if (b.y <= areaOfEffect && a.y >= areaOfEffect) {
-        deltaY = a.y - (canvas.height + b.y);
-      } else if ((b.y >= areaOfEffect && a.y >= areaOfEffect) || (b.y <= areaOfEffect && a.y <= areaOfEffect)) {
-        deltaY = a.y - b.y;
-      } else if (a.y <= areaOfEffect && b.y >= areaOfEffect) {
-        deltaY = a.y - (b.y - canvas.height);
-      }*/
-
       //TODO: OPTIMIZE: there is no need to compute sqrt if distance is 0
       let distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
 
