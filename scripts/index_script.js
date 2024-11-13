@@ -8,14 +8,16 @@ canvas.height = document.getElementById("cnvContainer").offsetHeight;
 
 //some usefull parameters:
 let areaOfEffect = 120;
+let areaOfEffectPrimeX = canvas.width - areaOfEffect;
+let areaOfEffectPrimeY = canvas.height - areaOfEffect;
 let velocityNerf = 0.5;
 let particleSize = 3;
 let universalRepelingForce = 0.1;
 
 let particles = new Array();
-let selectedParticles = new Array();  
-let isDragging = false;  
-let dragStartX, dragStartY;  
+let selectedParticles = new Array();
+let isDragging = false;
+let dragStartX, dragStartY;
 
 function particle(x, y, color) {
   //creates a particle object with it's cordinates and color and default velocity which is 0
@@ -71,6 +73,77 @@ function Repel(particle1, particle2, distance, deltaX, deltaY) {
   particle2.vy -= F * deltaY;
 }
 
+function GetLinearDistance(cordA, cordB, isXaxes) {
+  if (isXaxes) {
+
+    //1 of 6
+    if (cordA<= areaOfEffect && cordB <= areaOfEffect) {
+      return cordA - cordB;
+    }
+
+    //2 of 6
+    if (cordA>= areaOfEffectPrimeX && cordB >= areaOfEffectPrimeX) {
+      return cordA - cordB;
+    }
+
+    //3 of 6
+    if ((cordA >= areaOfEffect && cordA <= areaOfEffectPrimeX )&&(cordB >= areaOfEffect && cordB <= areaOfEffectPrimeX)) {
+      return cordA - cordB;
+    }
+
+    //4 of 6
+    if ((cordA <= areaOfEffect && cordB >= areaOfEffect) || (cordA >= areaOfEffect && cordB <= areaOfEffect)) {
+      return cordA - cordB;
+    }
+
+    //5 of 6
+    if ((cordA <= areaOfEffectPrimeX && cordB >= areaOfEffectPrimeX) || (cordA >= areaOfEffectPrimeX && cordB <= areaOfEffectPrimeX)) {
+      return cordA - cordB;
+    }
+    // 6 of 6
+    if (cordA <= areaOfEffect && cordB >= areaOfEffectPrimeX) {
+      return cordA - (cordB - areaOfEffect);
+    }
+    if (cordA >= areaOfEffectPrimeX && cordB <= areaOfEffect) {
+      return -(cordA - (cordB - areaOfEffect));
+    }
+
+
+  } 
+  else {
+    //1 of 6
+    if (cordA<= areaOfEffect && cordB <= areaOfEffect) {
+      return cordA - cordB;
+    }
+
+    //2 of 6
+    if (cordA>= areaOfEffectPrimeY && cordB >= areaOfEffectPrimeY) {
+      return cordA - cordB;
+    }
+
+    //3 of 6
+    if ((cordA >= areaOfEffect && cordA <= areaOfEffectPrimeY )&&(cordB >= areaOfEffect && cordB <= areaOfEffectPrimeY)) {
+      return cordA - cordB;
+    }
+
+    //4 of 6
+    if ((cordA <= areaOfEffect && cordB >= areaOfEffect) || (cordA >= areaOfEffect && cordB <= areaOfEffect)) {
+      return cordA - cordB;
+    }
+
+    //5 of 6
+    if ((cordA <= areaOfEffectPrimeY && cordB >= areaOfEffectPrimeY) || (cordA >= areaOfEffectPrimeY && cordB <= areaOfEffectPrimeY)) {
+      return cordA - cordB;
+    }
+    // 6 of 6
+    if (cordA <= areaOfEffect && cordB >= areaOfEffectPrimeY) {
+      return cordA - (cordB - areaOfEffect);
+    }
+    if (cordA >= areaOfEffectPrimeY && cordB <= areaOfEffect) {
+      return -(cordA - (cordB - areaOfEffect));
+    }
+  }
+}
 
 function Life(particleGroup1, particleGroup2, g) {
   for (let i = 0; i < particleGroup1.length; i++) {
@@ -81,26 +154,26 @@ function Life(particleGroup1, particleGroup2, g) {
     for (let j = 0; j < particleGroup2.length; j++) {
       let b = particleGroup2[j];
 
-      let deltaX;
-      let deltaY ;
-
       //Calculating deltaX & deltaY with Screen Wrap in mind
-      if (b.x < areaOfEffect && a.x > areaOfEffect) {
+      let deltaX = GetLinearDistance(a.x, b.x,true);
+      let deltaY = GetLinearDistance(a.y, b.y,false);
+
+      //OLD SYSTEM
+      /*if (b.x <= areaOfEffect && a.x >= areaOfEffect) {
         deltaX = a.x - (canvas.width + b.x);
-      } else if ((b.x > areaOfEffect && a.x > areaOfEffect) || (b.x < areaOfEffect && a.x < areaOfEffect)) {
+      } else if ((b.x >= areaOfEffect && a.x >= areaOfEffect) || (b.x <= areaOfEffect && a.x <= areaOfEffect)) {
         deltaX = a.x - b.x;
-      } else if (a.x < areaOfEffect && b.x > areaOfEffect) {
+      } else if (a.x <= areaOfEffect && b.x >= areaOfEffect) {
         deltaX = a.x - (b.x - canvas.width);
       }
 
-      if (b.y < areaOfEffect && a.y > areaOfEffect) {
+      if (b.y <= areaOfEffect && a.y >= areaOfEffect) {
         deltaY = a.y - (canvas.height + b.y);
-      } else if ((b.y > areaOfEffect && a.y > areaOfEffect) || (b.y < areaOfEffect && a.y < areaOfEffect)) {
+      } else if ((b.y >= areaOfEffect && a.y >= areaOfEffect) || (b.y <= areaOfEffect && a.y <= areaOfEffect)) {
         deltaY = a.y - b.y;
-      } else if (a.y < areaOfEffect && b.y > areaOfEffect) {
+      } else if (a.y <= areaOfEffect && b.y >= areaOfEffect) {
         deltaY = a.y - (b.y - canvas.height);
-      }
-
+      }*/
 
       //TODO: OPTIMIZE: there is no need to compute sqrt if distance is 0
       let distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
@@ -141,19 +214,19 @@ function Update() {
   Life(yellow, red, -0.05);
   Life(red, red, 0.4);
 
-  // Apply drag to selected particles  
-  if (isDragging) {  
-    let dx = event.clientX - dragStartX;  
-    let dy = event.clientY - dragStartY;  
-    selectedParticles.forEach(particle => {  
-      particle.x += dx;  
-      particle.y += dy;  
-      particle.x = (particle.x + canvas.width) % canvas.width;  
-      particle.y = (particle.y + canvas.height) % canvas.height;  
-    });  
-    dragStartX = event.clientX;  
-    dragStartY = event.clientY;  
-  }  
+  // Apply drag to selected particles
+  // if (isDragging) {
+  //   let dx = event.clientX - dragStartX;
+  //   let dy = event.clientY - dragStartY;
+  //   selectedParticles.forEach(particle => {
+  //     particle.x += dx;
+  //     particle.y += dy;
+  //     particle.x = (particle.x + canvas.width) % canvas.width;
+  //     particle.y = (particle.y + canvas.height) % canvas.height;
+  //   });
+  //   dragStartX = event.clientX;
+  //   dragStartY = event.clientY;
+  // }
 
   DrawRect(0, 0, canvas.width, canvas.height, "black");
 
@@ -164,21 +237,21 @@ function Update() {
   requestAnimationFrame(Update);
 }
 
-// Mouse event handlers  
-canvas.addEventListener('mousedown', (event) => {  
-  isDragging = true;  
-  dragStartX = event.clientX;  
-  dragStartY = event.clientY;  
-  selectedParticles = particles.filter(particle => {  
-    let dx = event.clientX - particle.x;  
-    let dy = event.clientY - particle.y;  
-    return Math.sqrt(dx * dx + dy * dy) < 30; 
-  });  
-});  
+// Mouse event handlers
+// canvas.addEventListener('mousedown', (event) => {
+//   isDragging = true;
+//   dragStartX = event.clientX;
+//   dragStartY = event.clientY;
+//   selectedParticles = particles.filter(particle => {
+//     let dx = event.clientX - particle.x;
+//     let dy = event.clientY - particle.y;
+//     return Math.sqrt(dx * dx + dy * dy) < 30;
+//   });
+// });
 
-canvas.addEventListener('mouseup', () => {  
-  isDragging = false;  
-  selectedParticles = [];  
+canvas.addEventListener("mouseup", () => {
+  isDragging = false;
+  selectedParticles = [];
 });
 
 Update();
