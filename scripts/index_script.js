@@ -24,6 +24,8 @@ function particle(x, y, color) {
   return { x: x, y: y, vx: 0, vy: 0, color: color };
 }
 
+//hello
+
 function Random(xory) {
   return Math.floor(Math.random() * xory);
 }
