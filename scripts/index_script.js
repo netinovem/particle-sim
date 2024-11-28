@@ -10,7 +10,7 @@ canvas.height = document.getElementById("cnvContainer").offsetHeight;
 let areaOfEffect = 120;
 let areaOfEffectPrimeX = canvas.width - areaOfEffect;
 let areaOfEffectPrimeY = canvas.height - areaOfEffect;
-let velocityNerf = 0.5;
+let velocityNerf = 0.8;
 let particleSize = 3;
 let universalRepelingForce = 0.1;
 
