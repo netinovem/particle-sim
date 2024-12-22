@@ -1,3 +1,4 @@
+//ENGINE:
 // Initialising the canvas
 let canvas = document.getElementById("cnvPlayGround");
 let ctx = canvas.getContext("2d");
@@ -7,17 +8,28 @@ canvas.width = document.getElementById("cnvContainer").offsetWidth;
 canvas.height = document.getElementById("cnvContainer").offsetHeight;
 
 //some usefull parameters:
-let areaOfEffect = 120;
+const areaOfEffect = 120;
 let areaOfEffectPrimeX = canvas.width - areaOfEffect;
 let areaOfEffectPrimeY = canvas.height - areaOfEffect;
-let velocityNerf = 0.8;
-let particleSize = 3;
-let universalRepelingForce = 0.1;
+const velocityNerf = 0.8;
+const particleSize = 3;
+const universalRepelingForce = 0.1;
+const minValue = -1; // Minimum value for matrix cells  
+const maxValue = 1; // Maximum value for matrix cells  
+const increment = 0.1; // Allowed increment for matrix cell values  
 
+//important arrays:
 let particles = new Array();
-let selectedParticles = new Array();
-let isDragging = false;
-let dragStartX, dragStartY;
+const colors = [
+  "yellow",
+  "red",
+  "green",
+  "aquamarine",
+  "purple",
+  "orange",
+  "lightpink",
+  "lightgreen",
+];
 
 function particle(x, y, color) {
   //creates a particle object with it's cordinates and color and default velocity which is 0
@@ -77,29 +89,39 @@ function Repel(particle1, particle2, distance, deltaX, deltaY) {
 
 function GetLinearDistance(cordA, cordB, isXaxes) {
   if (isXaxes) {
-
     //1 of 6
-    if (cordA<= areaOfEffect && cordB <= areaOfEffect) {
+    if (cordA <= areaOfEffect && cordB <= areaOfEffect) {
       return cordA - cordB;
     }
 
     //2 of 6
-    if (cordA>= areaOfEffectPrimeX && cordB >= areaOfEffectPrimeX) {
+    if (cordA >= areaOfEffectPrimeX && cordB >= areaOfEffectPrimeX) {
       return cordA - cordB;
     }
 
     //3 of 6
-    if ((cordA >= areaOfEffect && cordA <= areaOfEffectPrimeX )&&(cordB >= areaOfEffect && cordB <= areaOfEffectPrimeX)) {
+    if (
+      cordA >= areaOfEffect &&
+      cordA <= areaOfEffectPrimeX &&
+      cordB >= areaOfEffect &&
+      cordB <= areaOfEffectPrimeX
+    ) {
       return cordA - cordB;
     }
 
     //4 of 6
-    if ((cordA <= areaOfEffect && cordB >= areaOfEffect) || (cordA >= areaOfEffect && cordB <= areaOfEffect)) {
+    if (
+      (cordA <= areaOfEffect && cordB >= areaOfEffect) ||
+      (cordA >= areaOfEffect && cordB <= areaOfEffect)
+    ) {
       return cordA - cordB;
     }
 
     //5 of 6
-    if ((cordA <= areaOfEffectPrimeX && cordB >= areaOfEffectPrimeX) || (cordA >= areaOfEffectPrimeX && cordB <= areaOfEffectPrimeX)) {
+    if (
+      (cordA <= areaOfEffectPrimeX && cordB >= areaOfEffectPrimeX) ||
+      (cordA >= areaOfEffectPrimeX && cordB <= areaOfEffectPrimeX)
+    ) {
       return cordA - cordB;
     }
     // 6 of 6
@@ -109,32 +131,40 @@ function GetLinearDistance(cordA, cordB, isXaxes) {
     if (cordA >= areaOfEffectPrimeX && cordB <= areaOfEffect) {
       return -(cordA - (cordB - areaOfEffect));
     }
-
-
-  } 
-  else {
+  } else {
     //1 of 6
-    if (cordA<= areaOfEffect && cordB <= areaOfEffect) {
+    if (cordA <= areaOfEffect && cordB <= areaOfEffect) {
       return cordA - cordB;
     }
 
     //2 of 6
-    if (cordA>= areaOfEffectPrimeY && cordB >= areaOfEffectPrimeY) {
+    if (cordA >= areaOfEffectPrimeY && cordB >= areaOfEffectPrimeY) {
       return cordA - cordB;
     }
 
     //3 of 6
-    if ((cordA >= areaOfEffect && cordA <= areaOfEffectPrimeY )&&(cordB >= areaOfEffect && cordB <= areaOfEffectPrimeY)) {
+    if (
+      cordA >= areaOfEffect &&
+      cordA <= areaOfEffectPrimeY &&
+      cordB >= areaOfEffect &&
+      cordB <= areaOfEffectPrimeY
+    ) {
       return cordA - cordB;
     }
 
     //4 of 6
-    if ((cordA <= areaOfEffect && cordB >= areaOfEffect) || (cordA >= areaOfEffect && cordB <= areaOfEffect)) {
+    if (
+      (cordA <= areaOfEffect && cordB >= areaOfEffect) ||
+      (cordA >= areaOfEffect && cordB <= areaOfEffect)
+    ) {
       return cordA - cordB;
     }
 
     //5 of 6
-    if ((cordA <= areaOfEffectPrimeY && cordB >= areaOfEffectPrimeY) || (cordA >= areaOfEffectPrimeY && cordB <= areaOfEffectPrimeY)) {
+    if (
+      (cordA <= areaOfEffectPrimeY && cordB >= areaOfEffectPrimeY) ||
+      (cordA >= areaOfEffectPrimeY && cordB <= areaOfEffectPrimeY)
+    ) {
       return cordA - cordB;
     }
     // 6 of 6
@@ -147,6 +177,48 @@ function GetLinearDistance(cordA, cordB, isXaxes) {
   }
 }
 
+// Variables for mouse dragging
+let isDragging = false;
+let dragStartX, dragStartY;
+
+// Add mouse down event to start dragging
+canvas.addEventListener("mousedown", (e) => {
+  isDragging = true;
+  const rect = canvas.getBoundingClientRect();
+  dragStartX = e.clientX - rect.left;
+  dragStartY = e.clientY - rect.top;
+});
+
+// Add mouse up event to stop dragging
+canvas.addEventListener("mouseup", () => {
+  isDragging = false;
+});
+
+// Add mouse move event to update drag position and move particles
+canvas.addEventListener("mousemove", (e) => {
+  if (!isDragging) return; // Only update if dragging
+
+  const rect = canvas.getBoundingClientRect();
+  const mouseX = e.clientX - rect.left;
+  const mouseY = e.clientY - rect.top;
+
+  const radius = 200; // Radius within which particles will be affected
+
+  // Move particles within the drag radius
+  for (let particle of particles) {
+    const deltaX = mouseX - particle.x;
+    const deltaY = mouseY - particle.y;
+    const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+    if (distance < radius) {
+      // Calculate the movement factor based on the distance from the mouse
+      const force = 1 - distance / radius; // Normalized force scaling
+      particle.vx += (deltaX / distance) * force * 3; // Adjust force multiplier as needed
+      particle.vy += (deltaY / distance) * force * 3; // Adjust force multiplier as needed
+    }
+  }
+});
+
 function Life(particleGroup1, particleGroup2, g) {
   for (let i = 0; i < particleGroup1.length; i++) {
     let fx = 0;
@@ -157,8 +229,8 @@ function Life(particleGroup1, particleGroup2, g) {
       let b = particleGroup2[j];
 
       //Calculating deltaX & deltaY with Screen Wrap in mind
-      let deltaX = GetLinearDistance(a.x, b.x,true);
-      let deltaY = GetLinearDistance(a.y, b.y,false);
+      let deltaX = GetLinearDistance(a.x, b.x, true);
+      let deltaY = GetLinearDistance(a.y, b.y, false);
 
       //TODO: OPTIMIZE: there is no need to compute sqrt if distance is 0
       let distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
@@ -190,29 +262,30 @@ function Life(particleGroup1, particleGroup2, g) {
   }
 }
 
-//Creating particles:
-let yellow = Create(400, "yellow");
-let red = Create(200, "red");
+// Function to update particles based on the input value
+function UpdateParticles() {
+  const totalParticles = Number(inpParticleCount.value);
+  const numTypes = Math.min(8, Number(inpTypes.value)); // Ensure at least 1 type and max 8
+  const particlesPerType = Math.floor(totalParticles / numTypes); // Calculate particles per type
+
+  // Clear existing particles
+  particles = []; // Reset the particles array
+
+  // Create new particles for each type
+  for (let i = 0; i < numTypes; i++) {
+    const color = colors[i]; // Get specific color based on type index
+    Create(particlesPerType, color); // Create particles with that color
+  }
+
+  // If there are leftover particles due to integer division, distribute them evenly
+  const leftoverParticles = totalParticles % numTypes;
+  for (let j = 0; j < leftoverParticles; j++) {
+    const color = colors[j]; // Get color for leftover particles
+    Create(1, color); // Create one additional particle for that color
+  }
+}
 
 function Update() {
-  Life(red, yellow, 0.02);
-  Life(yellow, red, -0.05);
-  Life(red, red, 0.4);
-
-  // Apply drag to selected particles
-  // if (isDragging) {
-  //   let dx = event.clientX - dragStartX;
-  //   let dy = event.clientY - dragStartY;
-  //   selectedParticles.forEach(particle => {
-  //     particle.x += dx;
-  //     particle.y += dy;
-  //     particle.x = (particle.x + canvas.width) % canvas.width;
-  //     particle.y = (particle.y + canvas.height) % canvas.height;
-  //   });
-  //   dragStartX = event.clientX;
-  //   dragStartY = event.clientY;
-  // }
-
   DrawRect(0, 0, canvas.width, canvas.height, "black");
 
   for (let i = 0; i < particles.length; i++) {
@@ -221,22 +294,156 @@ function Update() {
 
   requestAnimationFrame(Update);
 }
+Update();
+//ENGINE ENDS
 
-// Mouse event handlers
-// canvas.addEventListener('mousedown', (event) => {
-//   isDragging = true;
-//   dragStartX = event.clientX;
-//   dragStartY = event.clientY;
-//   selectedParticles = particles.filter(particle => {
-//     let dx = event.clientX - particle.x;
-//     let dy = event.clientY - particle.y;
-//     return Math.sqrt(dx * dx + dy * dy) < 30;
-//   });
-// });
+//ui stuff:
+let inpParticleCount = document.getElementById("inpParticleCount");
+let btnSubtract = document.getElementById("btnSubtract");
+let btnAdd = document.getElementById("btnAdd");
+let inpTypes = document.getElementById("inpTypes");
+let btnSubtractType = document.getElementById("btnSubtractType");
+let btnAddType = document.getElementById("btnAddType");
 
-canvas.addEventListener("mouseup", () => {
-  isDragging = false;
-  selectedParticles = [];
+let forceMatrix = []; // To store the force matrix
+
+// Function to generate the force matrix based on the number of types
+function GenerateMatrix() {
+  const numTypes = Number(document.getElementById("inpTypes").value);
+  forceMatrix = Array.from({ length: numTypes }, () => Array(numTypes).fill(0)); // Initialize matrix with zeros
+
+  const matrixContainer = document.getElementById("matrixContainer");
+  matrixContainer.innerHTML = ""; // Clear previous matrix
+
+  const table = document.createElement("table");
+  table.style.borderCollapse = "collapse";
+
+  // Create the header row
+  const headerRow = document.createElement("tr");
+  headerRow.appendChild(document.createElement("th")); // Empty top-left corner cell
+
+  for (let i = 0; i < numTypes; i++) {
+    const th = document.createElement("th");
+    th.style.textAlign = "center";
+
+    // Create a circle in the header cell
+    const topCircle = document.createElement("div");
+    topCircle.style.width = "20px";
+    topCircle.style.height = "20px";
+    topCircle.style.borderRadius = "50%";
+    topCircle.style.backgroundColor = colors[i % colors.length];
+    topCircle.style.display = "inline-block"; // Ensure circle and number are inline
+    topCircle.style.marginBottom = "0"
+
+    th.appendChild(topCircle);
+    headerRow.appendChild(th);
+  }
+  table.appendChild(headerRow);
+
+  // Create table rows and cells for the matrix
+  for (let i = 0; i < numTypes; i++) {
+    const row = document.createElement("tr");
+    const typeHeader = document.createElement("td");
+    typeHeader.style.textAlign = "center";
+
+    // Create a circle in the header cell
+    const leftCircle = document.createElement("div");
+    leftCircle.style.width = "20px";
+    leftCircle.style.height = "20px";
+    leftCircle.style.borderRadius = "50%";
+    leftCircle.style.backgroundColor = colors[i % colors.length];
+    leftCircle.style.marginRight = "5px"
+    typeHeader.appendChild(leftCircle);
+    row.appendChild(typeHeader);
+
+    for (let j = 0; j < numTypes; j++) {
+      const cell = document.createElement("td");
+      const input = document.createElement("input");
+      input.type = "number";
+      input.value = forceMatrix[i][j];
+      input.style.width = "50px";
+      input.style.height = "50px";
+      input.style.textAlign = "center";
+      input.classList.add("cell-input");
+      input.step = increment;
+      input.min = minValue;
+      input.max = maxValue;
+
+      // Update the matrix when input changes
+      input.addEventListener("input", (e) => {
+        forceMatrix[i][j] = Number(e.target.value); // Update matrix value
+        updateParticleForces(); // Update particle forces based on new matrix value
+      });
+
+      cell.appendChild(input);
+      cell.style.border = "2px solid #9c528b";
+      row.appendChild(cell);
+    }
+    table.appendChild(row);
+  }
+
+  //table.style.border = "2px solid #9c528b";
+  table.style.borderCollapse = "collapse";
+  matrixContainer.appendChild(table);
+}
+
+// Update particle forces based on the matrix
+function updateParticleForces() {
+  // Implement logic here to apply the forces defined in forceMatrix
+  console.log("Updated Force Matrix:", forceMatrix);
+}
+
+// Event listener for types input change
+inpTypes.addEventListener("input", () => {
+  // Regenerate force matrix whenever the number of types changes
+  if (inpTypes.value === "") {
+    inpTypes.value = "0";
+  }
+  if (Number(inpTypes.value) > 0) {
+    GenerateMatrix(); // Call to generate the matrix
+  }
 });
 
-Update();
+inpParticleCount.addEventListener("input", () => {
+  if (inpParticleCount.value === "") {
+    inpParticleCount.value = "0";
+  }
+
+  console.log("hi");
+  UpdateParticles();
+});
+
+btnAdd.addEventListener("click", () => {
+  inpParticleCount.value = Number(inpParticleCount.value) + 100;
+  UpdateParticles();
+});
+
+btnSubtract.addEventListener("click", () => {
+  if (Number(inpParticleCount.value) >= 100) {
+    inpParticleCount.value = Number(inpParticleCount.value) - 100;
+  } else {
+    inpParticleCount.value = "0";
+  }
+  UpdateParticles();
+});
+
+btnAddType.addEventListener("click", () => {
+  if (Number(inpTypes.value) < 8) {
+    inpTypes.value = Number(inpTypes.value) + 1;
+  }
+  UpdateParticles();
+  GenerateMatrix();
+});
+
+btnSubtractType.addEventListener("click", () => {
+  if (Number(inpTypes.value) > 0) {
+    inpTypes.value = Number(inpTypes.value) - 1;
+  }
+  UpdateParticles();
+
+  GenerateMatrix();
+});
+
+//initial particles:
+Create(100, "yellow");
+GenerateMatrix();
