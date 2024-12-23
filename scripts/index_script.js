@@ -391,8 +391,8 @@ function GenerateMatrix() {
       const input = document.createElement("input");
       input.type = "number";
       input.value = forceMatrix[i][j];
-      input.style.width = "50px";
-      input.style.height = "50px";
+      input.style.width = "40px";
+      input.style.height = "40px";
       input.style.textAlign = "center";
       input.classList.add("cell-input");
       input.step = increment;

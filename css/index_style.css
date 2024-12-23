@@ -90,7 +90,7 @@ label {
   -webkit-appearance: none;
 }
 .controll-panel .types {
-  height: 52vh;
+  height: 50vh;
   padding: 20px;
   display: flex;
   flex-direction: column;
@@ -127,4 +127,17 @@ label {
 }
 .controll-panel .types .cell-input[type=number]::-webkit-inner-spin-button {
   -webkit-appearance: none;
+}
+
+.face {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #e2c2c6;
+  font-size: xx-large;
+  font-weight: bold;
+  height: 39vh;
+}
+.face div {
+  transform: rotate(90deg);
 }/*# sourceMappingURL=index_style.css.map */

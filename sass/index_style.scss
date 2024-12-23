@@ -135,7 +135,7 @@ label {
   }
 
   .types {
-    height: 52vh;
+    height: 50vh;
     padding: 20px;
     display: flex;
     flex-direction: column;
@@ -162,5 +162,16 @@ label {
       }
       border: none;
     }
+  }
+}
+
+.face{
+  @include MakeChildCenter();
+  color: $textColor;
+  font-size: xx-large;
+  font-weight: bold;
+  height: 39vh;
+  div{
+    transform: rotate(90deg);
   }
 }
