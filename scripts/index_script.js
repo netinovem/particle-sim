@@ -14,12 +14,14 @@ let areaOfEffectPrimeY = canvas.height - areaOfEffect;
 const velocityNerf = 0.8;
 const particleSize = 3;
 const universalRepelingForce = 0.1;
-const minValue = -1; // Minimum value for matrix cells  
-const maxValue = 1; // Maximum value for matrix cells  
-const increment = 0.1; // Allowed increment for matrix cell values  
+const minValue = -1; // Minimum value for matrix cells
+const maxValue = 1; // Maximum value for matrix cells
+const increment = 0.1; // Allowed increment for matrix cell values
 
 //important arrays:
 let particles = new Array();
+let particleGroups = new Array(); // 2D array to hold particles by type
+let forceMatrix = new Array(); // To store the force matrix
 const colors = [
   "yellow",
   "red",
@@ -223,6 +225,7 @@ function Life(particleGroup1, particleGroup2, g) {
   for (let i = 0; i < particleGroup1.length; i++) {
     let fx = 0;
     let fy = 0;
+
     let a = particleGroup1[i];
 
     for (let j = 0; j < particleGroup2.length; j++) {
@@ -262,6 +265,8 @@ function Life(particleGroup1, particleGroup2, g) {
   }
 }
 
+
+
 // Function to update particles based on the input value
 function UpdateParticles() {
   const totalParticles = Number(inpParticleCount.value);
@@ -270,22 +275,49 @@ function UpdateParticles() {
 
   // Clear existing particles
   particles = []; // Reset the particles array
+  particleGroups = Array.from({ length: numTypes }, () => []); // Reset the particleGroups array
 
   // Create new particles for each type
   for (let i = 0; i < numTypes; i++) {
     const color = colors[i]; // Get specific color based on type index
-    Create(particlesPerType, color); // Create particles with that color
+    const createdParticles = Create(particlesPerType, color); // Create particles with that color
+
+    // Populate particle groups
+    particleGroups[i] = createdParticles; // Store the created particles in the grouped array
+
+    // Append the created particles to the main particles array for rendering
+    particles.push(createdParticles); // Spread the created particles into the rendering array
   }
 
   // If there are leftover particles due to integer division, distribute them evenly
   const leftoverParticles = totalParticles % numTypes;
   for (let j = 0; j < leftoverParticles; j++) {
     const color = colors[j]; // Get color for leftover particles
-    Create(1, color); // Create one additional particle for that color
+    const createdParticle = Create(1, color); // Create one additional particle for that color
+
+    // Add to the corresponding type array
+    for (let index = 0; index < createdParticle.length; index++) {
+      particleGroups[j].push(createdParticle[index])
+    }
+
+    // Also add to the main particles array for rendering
+    particles.push(createdParticle); // Add to rendering array
   }
 }
 
+//initializing some starter particles.
+particleGroups[0] = Create(Number(document.getElementById("inpParticleCount").value),"yellow");
+
 function Update() {
+
+  //Life(particleGroups[0],particleGroups[0],1);
+  
+  for (let i = 0; i < forceMatrix.length; i++) {
+    for (let j = 0; j < forceMatrix[i].length; j++) {
+      Life(particleGroups[i],particleGroups[j],forceMatrix[i][j]);
+    }
+  }
+
   DrawRect(0, 0, canvas.width, canvas.height, "black");
 
   for (let i = 0; i < particles.length; i++) {
@@ -304,8 +336,6 @@ let btnAdd = document.getElementById("btnAdd");
 let inpTypes = document.getElementById("inpTypes");
 let btnSubtractType = document.getElementById("btnSubtractType");
 let btnAddType = document.getElementById("btnAddType");
-
-let forceMatrix = []; // To store the force matrix
 
 // Function to generate the force matrix based on the number of types
 function GenerateMatrix() {
@@ -333,7 +363,7 @@ function GenerateMatrix() {
     topCircle.style.borderRadius = "50%";
     topCircle.style.backgroundColor = colors[i % colors.length];
     topCircle.style.display = "inline-block"; // Ensure circle and number are inline
-    topCircle.style.marginBottom = "0"
+    topCircle.style.marginBottom = "0";
 
     th.appendChild(topCircle);
     headerRow.appendChild(th);
@@ -352,7 +382,7 @@ function GenerateMatrix() {
     leftCircle.style.height = "20px";
     leftCircle.style.borderRadius = "50%";
     leftCircle.style.backgroundColor = colors[i % colors.length];
-    leftCircle.style.marginRight = "5px"
+    leftCircle.style.marginRight = "5px";
     typeHeader.appendChild(leftCircle);
     row.appendChild(typeHeader);
 
@@ -372,7 +402,6 @@ function GenerateMatrix() {
       // Update the matrix when input changes
       input.addEventListener("input", (e) => {
         forceMatrix[i][j] = Number(e.target.value); // Update matrix value
-        updateParticleForces(); // Update particle forces based on new matrix value
       });
 
       cell.appendChild(input);
@@ -385,12 +414,6 @@ function GenerateMatrix() {
   //table.style.border = "2px solid #9c528b";
   table.style.borderCollapse = "collapse";
   matrixContainer.appendChild(table);
-}
-
-// Update particle forces based on the matrix
-function updateParticleForces() {
-  // Implement logic here to apply the forces defined in forceMatrix
-  console.log("Updated Force Matrix:", forceMatrix);
 }
 
 // Event listener for types input change
@@ -444,6 +467,5 @@ btnSubtractType.addEventListener("click", () => {
   GenerateMatrix();
 });
 
-//initial particles:
-Create(100, "yellow");
+
 GenerateMatrix();
